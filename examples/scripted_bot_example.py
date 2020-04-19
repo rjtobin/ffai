@@ -147,6 +147,8 @@ class MyScriptedBot(ProcBot):
         if game.is_team_side(game.get_ball_position(), self.my_team) and \
                 game.get_player_at(game.get_ball_position()) is None:
             for player in game.get_players_on_pitch(self.my_team, up=True):
+                if game.num_tackle_zones_in(player) != 0:
+                    continue
                 if Skill.BLOCK in player.get_skills():
                     return Action(ActionType.SELECT_PLAYER, player=player, position=ball_pos)
         return Action(ActionType.SELECT_NONE)
