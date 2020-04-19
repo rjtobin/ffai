@@ -3,6 +3,8 @@
 import ffai
 import ffai.ai.bots.testbots
 
+import grodbot
+
 
 # Load competition configuration for the bot bowl
 config = ffai.load_config('bot-bowl-ii')

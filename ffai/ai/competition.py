@@ -9,7 +9,7 @@ from copy import deepcopy
 import numpy as np
 from ffai.ai.registry import make_bot
 from ffai.core.game import Game
-from ffai.core.table import CasualtyType, OutcomeType
+from ffai.core.table import CasualtyType, OutcomeType, CasualtyEffect
 from ffai.core.load import load_team_by_name, load_rule_set, load_config
 import time
 import pickle
@@ -27,8 +27,8 @@ class TeamResult:
         self.tds = team.state.score
         self.cas = len(game.get_casualties(team))
         self.cas_inflicted = len(game.get_casualties(game.get_opp_team(team)))
-        self.kills = len([player for player in game.get_casualties(team) if player.state.casualty_type == CasualtyType.DEAD])
-        self.kills_inflicted = len([player for player in game.get_casualties(game.get_opp_team(team)) if player.state.casualty_type == CasualtyType.DEAD])
+        self.kills = len([player for player in game.get_casualties(team) if player.state.injuries_gained.count(CasualtyEffect.DEAD) > 0])
+        self.kills_inflicted = len([player for player in game.get_casualties(game.get_opp_team(team)) if player.state.injuries_gained.count(CasualtyEffect.DEAD) > 0])
         # Count inflicted casualties and kills from reports
         self.timed_out_win = timed_out and self.win
         self.timed_out_loss = timed_out and not self.win and not self.draw

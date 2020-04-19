@@ -5,6 +5,8 @@ from ffai import Action, ActionType, Square, BBDieResult, Skill, PassDistance, T
 import ffai.ai.pathfinding as pf
 import time
 
+import grodbot
+
 class MyScriptedBot(ProcBot):
 
     def __init__(self, name):
@@ -696,7 +698,7 @@ ffai.register_bot('scripted', MyScriptedBot)
 if __name__ == "__main__":
 
     # Uncomment to this to evaluate the bot against the random baseline
-    '''
+    #'''
     # Load configurations, rules, arena and teams
     config = ffai.load_config("bot-bowl-ii")
     config.competition_mode = False
@@ -712,7 +714,7 @@ if __name__ == "__main__":
     for i in range(10):
         home_agent = ffai.make_bot('scripted')
         home_agent.name = "Scripted Bot"
-        away_agent = ffai.make_bot('random')
+        away_agent = ffai.make_bot('grodbot')
         away_agent.name = "Random Bot"
         config.debug_mode = False
         game = ffai.Game(i, home, away, home_agent, away_agent, config, arena=arena, ruleset=ruleset)
@@ -723,9 +725,9 @@ if __name__ == "__main__":
         game.init()
         end = time.time()
         print(end - start)
-    '''
+    #'''
 
-    import ffai.web.server as server
+    #import ffai.web.server as server
 
-    if __name__ == "__main__":
-        server.start_server(debug=True, use_reloader=False)
+    #if __name__ == "__main__":
+    #    server.start_server(debug=True, use_reloader=False)
