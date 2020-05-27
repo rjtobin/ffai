@@ -16,6 +16,7 @@ import tkinter as tk
 import math
 from copy import deepcopy
 
+from ffai.ai.bots.test_proc import TerribleBot
 
 class FFAIEnv(gym.Env):
 
@@ -175,6 +176,8 @@ class FFAIEnv(gym.Env):
         self.own_team = None
         self.opp_team = None
 
+        self.bot = TerribleBot("terriblebot")
+
         self.layers = [
             OccupiedLayer(),
             OwnPlayerLayer(),
@@ -219,7 +222,8 @@ class FFAIEnv(gym.Env):
         self.action_space = spaces.Dict({
             'action-type': spaces.Discrete(len(FFAIEnv.actions)),
             'x': spaces.Discrete(arena.width),
-            'y': spaces.Discrete(arena.height)
+            'y': spaces.Discrete(arena.height),
+            'r': spaces.Discrete(20),
         })
 
     def step(self, action):
@@ -234,6 +238,12 @@ class FFAIEnv(gym.Env):
             position = p
         real_action = Action(action_type=action_type, position=position, player=player)
         self.last_report_idx = len(self.game.state.reports)
+
+        self.bot.random_prob = action['r'] / 20.
+        bot_action = self.bot.act(self.game)
+        if bot_action:
+            real_action = bot_action
+        
         return self._step(real_action)
 
     def _step(self, action):
@@ -402,6 +412,8 @@ class FFAIEnv(gym.Env):
         self.game.init()
         self.own_team = self.game.get_agent_team(self.actor)
         self.opp_team = self.game.get_agent_team(self.opp_actor)
+        self.bot = TerribleBot('terriblebot')
+        self.bot.new_game(self.game, self.own_team)
 
         return self._observation(self.game)
 

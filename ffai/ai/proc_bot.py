@@ -18,7 +18,7 @@ class ProcBot(Agent):
 
         # Get current procedure
         proc = game.get_procedure()
-        # print(type(proc))
+        #print(type(proc))
 
         # Call private function
         if isinstance(proc, CoinTossFlip):
@@ -61,8 +61,12 @@ class ProcBot(Agent):
             return self.apothecary(game)
         if isinstance(proc, Interception):
             return self.interception(game)
+        if isinstance(proc, StartGame):
+            return Action(ActionType.START_GAME)
+        if isinstance(proc, Touchdown):
+            return None
 
-        raise Exception("Unknown procedure")
+        raise Exception("Unknown procedure: {}".format(proc))
 
     def use_pro(self, game):
         raise NotImplementedError("This method must be overridden by non-human subclasses")

@@ -16,7 +16,7 @@ import random
 
 # Training configuration
 num_steps = 1000000
-num_processes = 8
+num_processes = 4
 steps_per_update = 20
 learning_rate = 0.001
 gamma = 0.99
@@ -34,7 +34,7 @@ env_name = "FFAI-1-v2"
 #log_interval = 100
 #env_name = "FFAI-5-v2"
 #num_steps = 100000000 # Increase training time
-#log_interval = 1000
+#log_interval = 100
 #save_interval = 5000
 # env_name = "FFAI-v2"
 reset_steps = 5000  # The environment is reset after this many steps it gets stuck
@@ -401,14 +401,14 @@ def main():
 
     def compute_action(action_idx):
         if action_idx < len(non_spatial_action_types):
-            return non_spatial_action_types[action_idx], 0, 0
+            return non_spatial_action_types[action_idx], 0, 0, int(20. * action_idx / float(action_space))
         spatial_idx = action_idx - num_non_spatial_action_types
         spatial_pos_idx = spatial_idx % board_squares
         spatial_y = int(spatial_pos_idx / board_dim[1])
         spatial_x = int(spatial_pos_idx % board_dim[1])
         spatial_action_type_idx = int(spatial_idx / board_squares)
         spatial_action_type = spatial_action_types[spatial_action_type_idx]
-        return spatial_action_type, spatial_x, spatial_y
+        return spatial_action_type, spatial_x, spatial_y, int(20. * action_idx / float(action_space))
 
     # Clear log file
     try:
@@ -487,11 +487,12 @@ def main():
             action_objects = []
 
             for action in actions:
-                action_type, x, y = compute_action(action.numpy()[0])
+                action_type, x, y, r = compute_action(action.numpy()[0])
                 action_object = {
                     'action-type': action_type,
                     'x': x,
-                    'y': y
+                    'y': y,
+                    'r': r
                 }
                 action_objects.append(action_object)
 

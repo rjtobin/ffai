@@ -3,7 +3,8 @@
 import ffai
 import numpy as np
 
-from ffai import Action,ActionType,Square
+from ffai.core.model import Action,ActionType,Square
+from ffai.ai.proc_bot import ProcBot
 import ffai.ai.pathfinding as pf
 
 def position_abs_distance(pos1, pos2):
@@ -18,7 +19,7 @@ def is_better_block_action(action_choice1, action_choice2):
     rankings[ffai.ActionType.SELECT_DEFENDER_DOWN]     = 4
     return rankings[action_choice1.action_type] > rankings[action_choice2.action_type]
 
-class MyRandomProcBot(ffai.ProcBot):
+class MyRandomProcBot(ProcBot):
 
     def __init__(self, name, seed=None, log_act=False):
         super().__init__(name)
@@ -35,18 +36,24 @@ class MyRandomProcBot(ffai.ProcBot):
         
     def _random_act(self, game, caller="??"):
         # Most of this code is taken from MyRandomBot in the tutorial
-        print("ACTING RANDOMLY")
         if self.log_act:
             self.log_file.write("<{}> actions:\n".format(caller))
             for action in game.state.available_actions:
                 self.log_file.write("\t\t{}\n".format(action.to_json()))
-        
-        # Select a random action type
-        while True:
-            action_choice = self.rnd.choice(game.state.available_actions)
-            # Ignore PLACE_PLAYER actions
-            if action_choice.action_type != ffai.ActionType.PLACE_PLAYER:
+
+        action_choice = None
+        for action in game.state.available_actions:
+            if action.action_type == ffai.ActionType.END_TURN:
+                action_choice = action
                 break
+                
+        # Select a random action type
+        if not action_choice:
+            while True:
+                action_choice = self.rnd.choice(game.state.available_actions)
+                # Ignore PLACE_PLAYER actions
+                if action_choice.action_type != ffai.ActionType.PLACE_PLAYER:
+                    break
 
         # Select a random position and/or player
         position = self.rnd.choice(action_choice.positions) if len(action_choice.positions) > 0 else None
@@ -56,7 +63,6 @@ class MyRandomProcBot(ffai.ProcBot):
         action = ffai.Action(action_choice.action_type, position=position, player=player)
 
         # Return action to the framework
-        print(action.to_json())
         return action
 
     def player_action(self, game):
@@ -127,6 +133,7 @@ class TerribleBot(MyRandomProcBot):
         self.new_turn = True
         self.queued_actions = []
         self.defending = True
+        self.random_prob = 1.0
 
     def player_action(self, game):
         '''
@@ -137,7 +144,7 @@ class TerribleBot(MyRandomProcBot):
         '''
         if self.queued_actions:
             action = self.queued_actions[0]
-            print(action.to_json())
+            #print(action.to_json())
             self.queued_actions = self.queued_actions[1:]
             return action
         return Action(ActionType.END_PLAYER_TURN)
@@ -148,6 +155,11 @@ class TerribleBot(MyRandomProcBot):
         time I have been called this game turn, then split off into
         seperate defensive and offensive routines.
         '''
+
+        r = self.rnd.uniform()
+        if r < self.random_prob:
+            return self._random_act(game)
+        
         self.my_team = game.get_team_by_id(self.my_team.team_id)
         self.other_team = game.get_opp_team(self.my_team)
 
@@ -315,7 +327,7 @@ class TerribleBot(MyRandomProcBot):
         ball_carrier = game.get_ball_carrier()
         if not ball_carrier or ball_carrier.team == self.my_team:
             return None
-        path = pf.get_safest_scoring_path(game, ball_carrier, max_search_distance=30)
+        path = pf.get_safest_path_to_endzone(game, ball_carrier) #HACK: needs to be fixed
         if not path:
             return None
         
@@ -361,10 +373,6 @@ class TerribleBot(MyRandomProcBot):
                 self.queued_actions.append(Action(ActionType.STAND_UP))
             self.queued_actions.extend([Action(ActionType.MOVE, position=p) for p in path.steps])
             return Action(ActionType.START_MOVE, player=player)
-
-        print("Nothing left")
-        if best_tuple:
-            print(best_tuple)
         return None
 
     def _block(self, game):
@@ -412,7 +420,7 @@ class TerribleBot(MyRandomProcBot):
 
     def _get_offense_action_posession(self, game, ball_carrier):
         if game.num_tackle_zones_in(ball_carrier) == 0 and not ball_carrier.state.used:
-            path = pf.get_safest_scoring_path(game, ball_carrier, max_search_distance=30)
+            path = pf.get_safest_path_to_endzone(game, ball_carrier) # HACK
             if path:
                 real_steps = []
                 steps = path.steps[:ball_carrier.num_moves_left(include_gfi=False)]
@@ -457,7 +465,7 @@ class TerribleBot(MyRandomProcBot):
         return self._end_turn()
 
 # Register the bot to the framework
-ffai.register_bot('terriblebot', TerribleBot)
+#ffai.register_bot('terriblebot', TerribleBot)
 
 
 if __name__ == "__main__":
